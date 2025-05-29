@@ -1,11 +1,20 @@
 import streamlit as st
+
+try:
+    from ultralytics import YOLO
+    st.write("✅ โหลด ultralytics สำเร็จ")
+except ModuleNotFoundError:
+    st.error("❌ ไลบรารี ultralytics ยังไม่ได้ติดตั้ง")
+
 from PIL import Image
 import requests
 from io import BytesIO
-from ultralytics import YOLO
 
-# โหลดโมเดล YOLOv8
-model = YOLO("yolov8n.pt")
+model = None
+try:
+    model = YOLO("yolov8n.pt")
+except Exception as e:
+    st.error(f"ไม่สามารถโหลดโมเดล YOLO: {e}")
 
 def load_image_from_url(url):
     try:
@@ -16,6 +25,8 @@ def load_image_from_url(url):
         return None
 
 def detect_objects(image):
+    if model is None:
+        return []
     results = model.predict(image)
     if results and len(results) > 0:
         names = results[0].names
@@ -39,7 +50,6 @@ def overlay_images(base_image, overlay_images, alpha=0.5):
 
 st.title("🧠 ซ้อนภาพ + ตรวจจับวัตถุ จาก URL")
 
-# รับ URL รูปภาพ
 url1 = st.text_input("URL รูปภาพพื้นหลัง (Base)", "")
 url2 = st.text_input("URL รูปภาพซ้อนที่ 1", "")
 url3 = st.text_input("URL รูปภาพซ้อนที่ 2 (ถ้ามี)", "")
@@ -61,7 +71,6 @@ if st.button("โหลดและซ้อนภาพ"):
             else:
                 st.error(f"❌ โหลดไม่ได้: {url}")
 
-    # แสดงผลการตรวจจับวัตถุ
     for idx, (title, url, objects) in enumerate(object_info):
         st.markdown(f"### {title}")
         st.image(all_images[idx], caption=f"จาก: {url}", use_container_width=True)
@@ -70,7 +79,6 @@ if st.button("โหลดและซ้อนภาพ"):
         else:
             st.info("ไม่พบวัตถุที่รู้จัก")
 
-    # ซ้อนภาพ
     if len(all_images) > 1:
         base = all_images[0]
         overlays = resize_images_to_base(base, all_images[1:])
