@@ -1,0 +1,1 @@
+easyocr @ git+https://github.com/JaidedAI/EasyOCR
