@@ -1,34 +1,31 @@
 import streamlit as st
-
-try:
-    from ultralytics import YOLO
-    st.write("✅ โหลด ultralytics สำเร็จ")
-except ModuleNotFoundError:
-    st.error("❌ ไลบรารี ultralytics ยังไม่ได้ติดตั้ง")
-
 from PIL import Image
 import requests
 from io import BytesIO
+from ultralytics import YOLO
 
-model = None
+# โหลดโมเดล YOLOv8 (ถ้าไฟล์โมเดลไม่อยู่ในเครื่อง อาจต้องดาวน์โหลดก่อน)
 try:
     model = YOLO("yolov8n.pt")
 except Exception as e:
-    st.error(f"ไม่สามารถโหลดโมเดล YOLO: {e}")
+    st.error(f"❌ ไม่สามารถโหลดโมเดล YOLOv8 ได้: {e}")
+    model = None
 
 def load_image_from_url(url):
     try:
-        response = requests.get(url)
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
         img = Image.open(BytesIO(response.content)).convert("RGBA")
         return img
-    except:
+    except Exception as e:
+        st.error(f"❌ โหลดภาพจาก URL ไม่สำเร็จ: {url}\n{e}")
         return None
 
 def detect_objects(image):
     if model is None:
         return []
     results = model.predict(image)
-    if results and len(results) > 0:
+    if results and len(results) > 0 and results[0].boxes is not None and len(results[0].boxes) > 0:
         names = results[0].names
         classes = results[0].boxes.cls.tolist()
         detected = [names[int(c)] for c in classes]
@@ -37,9 +34,7 @@ def detect_objects(image):
 
 def resize_images_to_base(base_image, overlay_images):
     base_size = base_image.size
-    resized = []
-    for img in overlay_images:
-        resized.append(img.resize(base_size))
+    resized = [img.resize(base_size) for img in overlay_images]
     return resized
 
 def overlay_images(base_image, overlay_images, alpha=0.5):
@@ -61,7 +56,8 @@ if st.button("โหลดและซ้อนภาพ"):
     object_info = []
 
     for i, url in enumerate(urls):
-        if url.strip():
+        url = url.strip()
+        if url:
             img = load_image_from_url(url)
             if img:
                 all_images.append(img)
@@ -71,6 +67,7 @@ if st.button("โหลดและซ้อนภาพ"):
             else:
                 st.error(f"❌ โหลดไม่ได้: {url}")
 
+    # แสดงผลการตรวจจับวัตถุ
     for idx, (title, url, objects) in enumerate(object_info):
         st.markdown(f"### {title}")
         st.image(all_images[idx], caption=f"จาก: {url}", use_container_width=True)
@@ -79,6 +76,7 @@ if st.button("โหลดและซ้อนภาพ"):
         else:
             st.info("ไม่พบวัตถุที่รู้จัก")
 
+    # ซ้อนภาพถ้ามีภาพอย่างน้อย 2 ภาพ
     if len(all_images) > 1:
         base = all_images[0]
         overlays = resize_images_to_base(base, all_images[1:])
