@@ -28,7 +28,7 @@ def overlay_images(base_image, overlay_images, alpha=0.5):
 st.title("ซ้อนภาพจาก URL ด้วย Streamlit")
 
 # รับ URL รูปภาพ
-url1 = st.text_input("URL รูปภาพพื้นหลัง (Base)", "https://upload.wikimedia.org/wikipedia/commons/b/bf/Bulldog_inglese.jpg")
+url1 = st.text_input("URL รูปภาพพื้นหลัง (Base)", "")
 url2 = st.text_input("URL รูปภาพซ้อนที่ 1", "")
 url3 = st.text_input("URL รูปภาพซ้อนที่ 2 (ถ้ามี)", "")
 alpha = st.slider("ระดับความโปร่งของภาพซ้อน (alpha)", 0.0, 1.0, 0.5, 0.05)
@@ -48,6 +48,6 @@ if st.button("โหลดและซ้อนภาพ"):
     if base and overlays:
         overlays_resized = resize_images_to_base(base, overlays)
         result = overlay_images(base, overlays_resized, alpha)
-        st.image(result, caption="ภาพซ้อนกันแล้ว", use_column_width=True)
+        st.image(result, caption="ภาพซ้อนกันแล้ว", use_container_width=True)
     else:
         st.warning("กรุณาใส่ URL รูปภาพพื้นหลัง และอย่างน้อย 1 ภาพซ้อน")
