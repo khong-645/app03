@@ -2,4 +2,3 @@ streamlit
 pillow
 requests
 ultralytics
-easyocr @ git+https://github.com/JaidedAI/EasyOCR.giteasyocr @ git+https://github.com/JaidedAI/EasyOCR
